@@ -21,6 +21,10 @@ code {
 .searchRow :focus {
   background-color: #ffffe0;
 }
+.searchRow :hover {
+  background-color: #ffffe0;
+}
+
 .noData {
   height: 200px;
   width: 50%;
@@ -47,4 +51,8 @@ code {
   pointer-events: none;
   color: #aaa;
   margin-left: 10px;
+}
+div:hover,
+div:active {
+  outline: none;
 }

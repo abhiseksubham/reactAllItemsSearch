@@ -19,6 +19,8 @@ class App extends Component {
     error: false,
     errorMessage: null,
     ismovefocusdefined: false,
+    selectedIndex: 0,
+    isMouseActive: false,
   };
 
   async componentDidMount() {
@@ -44,29 +46,55 @@ class App extends Component {
     }
   }
 
-  moveFocus() {
-    const node = this.myRef.current;
-    //Set this event listner only once
-    if (node && this.state.ismovefocusdefined === false) {
-      node.addEventListener('keydown', function (e) {
-        const active = document.activeElement;
-        if (e.keyCode === 40 && active.nextSibling) {
-          active.nextSibling.focus();
-        }
-        if (e.keyCode === 38 && active.previousSibling) {
-          active.previousSibling.focus();
-        }
-      });
-      this.setState({ ismovefocusdefined: true });
-    }
-  }
+  moveFocus = e => {
+    this.setState({ isMouseActive: false });
+    //select only on first key press
+    if (
+      e.keyCode === 40 &&
+      this.state.selectedIndex !== this.state.filteredData?.length - 1
+    ) {
+      //remove focus from previously selected Items
+      // const active = document.activeElement;
+      // active.blur();
 
-  debounceSearch = debounce(e => {
-    const {
-      target: { value },
-    } = e;
-    this._handleChange(value);
-  }, 300);
+      if (this.state.selectedIndex === null) {
+        this.setState({ selectedIndex: 0 });
+      } else {
+        this.setState(
+          { selectedIndex: ++this.state.selectedIndex },
+          function () {
+            //console.log(this.state.selectedIndex);
+            var focusable = document.querySelectorAll(
+              '[tabindex]:not([tabindex="-1"])',
+            );
+            //console.log(focusable[0]);
+            focusable[this.state.selectedIndex].scrollIntoView({
+              block: 'center',
+            });
+          },
+        );
+      }
+    } else if (e.keyCode === 38 && this.state.selectedIndex > 0) {
+      this.setState({ selectedIndex: --this.state.selectedIndex }, function () {
+        // console.log(this.state.selectedIndex);
+        var focusable = document.querySelectorAll(
+          '[tabindex]:not([tabindex="-1"])',
+        );
+        // console.log(focusable[0]);
+        focusable[this.state.selectedIndex].scrollIntoView({
+          block: 'center',
+        });
+      });
+    }
+  };
+
+  setMouseActive = () => {
+    this.setState({ isMouseActive: true });
+  };
+
+  setMouseInactive = () => {
+    this.setState({ isMouseActive: false });
+  };
 
   _debounceSearch = debounce(value => {
     const { data } = this.state;
@@ -96,14 +124,7 @@ class App extends Component {
         filteredData: searchedUsers,
       });
     }
-    //could have used a mutation observer as well
-    setTimeout(
-      function () {
-        this.moveFocus();
-      }.bind(this),
-      300,
-    );
-  }, 300);
+  });
 
   // Put loadash debounce here
   _handleChange = e => {
@@ -114,9 +135,21 @@ class App extends Component {
   };
 
   render() {
-    const { loader, filteredData, error, errorMessage } = this.state;
+    const {
+      loader,
+      filteredData,
+      error,
+      errorMessage,
+      selectedIndex,
+      isMouseActive,
+    } = this.state;
     return (
-      <>
+      <div
+        onKeyDown={this.moveFocus}
+        onMouseEnter={this.setMouseActive}
+        onMouseLeave={this.setMouseInactive}
+        onMouseMove={this.setMouseActive}
+      >
         {error && <span>{errorMessage}</span>}
         {loader && (
           <span>
@@ -126,11 +159,11 @@ class App extends Component {
         )}
         {!loader && (
           <>
-            <div class="form-group has-search">
-              <span class="fa fa-search form-control-feedback"></span>
+            <div className="form-group has-search">
+              <span className="fa fa-search form-control-feedback"></span>
               <input
                 type="text"
-                class="form-control"
+                className="form-control"
                 placeholder="Search users by Id, address, Name, Items, Pincode"
                 onChange={this._handleChange}
               ></input>
@@ -140,7 +173,7 @@ class App extends Component {
         {filteredData?.length > 0 && (
           <>
             <Paper
-              className="searchRow"
+              className={isMouseActive ? 'searchRow' : ''}
               ref={this.myRef}
               style={{
                 backgroundColor: 'white',
@@ -153,11 +186,16 @@ class App extends Component {
               }}
             >
               {filteredData.map((rowData, index) => (
-                <SearchRow
-                  rowData={rowData}
-                  key={rowData.id}
-                  tabindex={index}
-                ></SearchRow>
+                <>
+                  <SearchRow
+                    rowData={rowData}
+                    key={index}
+                    id={index}
+                    selected={selectedIndex}
+                    tabindex={index}
+                    isMouseActive={isMouseActive}
+                  ></SearchRow>
+                </>
               ))}
             </Paper>
           </>
@@ -167,7 +205,7 @@ class App extends Component {
             <div>No User Found</div>
           </Paper>
         )}
-      </>
+      </div>
     );
   }
 }

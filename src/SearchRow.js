@@ -33,9 +33,17 @@ const useStyles = makeStyles({
 
 const SearchRow = props => {
   const classes = useStyles();
-  const { rowData, tabindex } = props;
+  const { rowData, tabindex, selected, id, isMouseActive } = props;
   return (
-    <Card className={classes.root} variant="outlined" tabIndex={tabindex}>
+    <Card
+      className={classes.root}
+      variant="outlined"
+      tabIndex={tabindex}
+      style={{
+        backgroundColor:
+          selected === id && !isMouseActive ? '#ffffe0' : 'white',
+      }}
+    >
       <CardContent className={classes.content}>
         <Typography variant="h5" component="h2">
           {rowData.id}
